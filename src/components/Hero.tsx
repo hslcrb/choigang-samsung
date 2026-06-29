@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const CAROUSEL_SLIDES = [
   {
@@ -27,45 +30,99 @@ const CAROUSEL_SLIDES = [
 export default function Hero() {
   const [activeSlide, setActiveSlide] = useState(0)
   const sectionRef = useRef<HTMLElement>(null)
+  const bgRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const badgeRef = useRef<HTMLSpanElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const subtitleRef = useRef<HTMLParagraphElement>(null)
   const actionsRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
+  const statNumsRef = useRef<(HTMLSpanElement | null)[]>([])
   const carouselRef = useRef<HTMLDivElement>(null)
   const slidesRef = useRef<HTMLDivElement>(null)
-  const slideImgsRef = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
+    const section = sectionRef.current
+    const bg = bgRef.current
+    if (!section || !bg) return
+
     const ctx = gsap.context(() => {
+      // ── Entry timeline: snappy, bouncy ──
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+      tl.from(badgeRef.current, { opacity: 0, y: 30, duration: 0.7 })
+        .from(titleRef.current, { opacity: 0, x: -80, duration: 0.9, ease: 'back.out(1.7)' }, '-=0.3')
+        .from(subtitleRef.current, { opacity: 0, x: -60, duration: 0.8 }, '-=0.5')
+        .from(actionsRef.current?.children || [], { opacity: 0, y: 24, duration: 0.5, stagger: 0.12, ease: 'back.out(1.7)' }, '-=0.3')
 
-      tl.from(badgeRef.current, { opacity: 0, y: 30, duration: 0.8 })
-        .from(titleRef.current, { opacity: 0, x: -80, duration: 1 }, '-=0.4')
-        .from(subtitleRef.current, { opacity: 0, x: -60, duration: 0.9 }, '-=0.6')
-        .from(actionsRef.current?.children || [], { opacity: 0, y: 20, duration: 0.5, stagger: 0.15 }, '-=0.4')
-        .from(statsRef.current?.children || [], { opacity: 0, y: 30, duration: 0.6, stagger: 0.12 }, '-=0.2')
-
-      gsap.from(carouselRef.current, { opacity: 0, x: 100, duration: 1.2, ease: 'power3.out', delay: 0.3 })
-
-      gsap.to(overlayRef.current, {
-        opacity: 0.7,
-        duration: 2,
-        ease: 'power1.inOut',
+      // Stats: pop in with overshoot
+      gsap.from(statsRef.current?.children || [], {
+        opacity: 0,
+        y: 40,
+        duration: 0.7,
+        stagger: 0.1,
+        ease: 'back.out(2)',
+        delay: 1,
       })
+
+      // Overlay fade
+      gsap.to(overlayRef.current, { opacity: 0.7, duration: 1.8, ease: 'power2.out', delay: 0 })
+
+      // Carousel slide-in
+      gsap.from(carouselRef.current, { opacity: 0, x: 120, duration: 1, ease: 'power3.out', delay: 0.4 })
+
+      // ── Scroll-driven: background rushes forward ──
+      gsap.to(bg, {
+        scale: 1.4,
+        opacity: 0.5,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 0.4,
+        },
+      })
+
+      // Content fades out on scroll
+      const content = section.querySelector('.hero-layout') as HTMLElement
+      if (content) {
+        gsap.to(content, {
+          opacity: 0,
+          y: -60,
+          ease: 'power2.in',
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.5,
+          },
+        })
+      }
+
+      // Carousel tilts slightly on scroll
+      if (carouselRef.current) {
+        gsap.to(carouselRef.current, {
+          rotationX: -15,
+          rotationY: 8,
+          scale: 0.92,
+          ease: 'power2.in',
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.5,
+          },
+        })
+      }
     })
 
+    // ── Carousel auto-slide ──
     const interval = setInterval(() => {
       setActiveSlide((prev) => {
         const next = (prev + 1) % CAROUSEL_SLIDES.length
         const slides = slidesRef.current
         if (slides) {
-          gsap.to(slides, {
-            x: -next * 100 + '%',
-            duration: 0.8,
-            ease: 'power3.inOut',
-          })
+          gsap.to(slides, { x: -next * 100 + '%', duration: 0.7, ease: 'power3.inOut' })
         }
         return next
       })
@@ -81,17 +138,13 @@ export default function Hero() {
     setActiveSlide(i)
     const slides = slidesRef.current
     if (slides) {
-      gsap.to(slides, {
-        x: -i * 100 + '%',
-        duration: 0.6,
-        ease: 'power3.inOut',
-      })
+      gsap.to(slides, { x: -i * 100 + '%', duration: 0.6, ease: 'power3.inOut' })
     }
   }
 
   return (
     <section id="home" ref={sectionRef} className="hero">
-      <div className="hero-bg" />
+      <div ref={bgRef} className="hero-bg" />
       <div ref={overlayRef} className="hero-overlay" />
       <div className="hero-layout container">
         <div className="hero-text">
@@ -119,9 +172,14 @@ export default function Hero() {
               { num: '14', label: 'Korean Series Appearances' },
               { num: '1982', label: 'Founded' },
               { num: '28,000', label: 'Stadium Capacity' },
-            ].map((s) => (
+            ].map((s, i) => (
               <div key={s.label} className="hero-stat">
-                <span className="hero-stat-num">{s.num}</span>
+                <span
+                  ref={(el) => { statNumsRef.current[i] = el }}
+                  className="hero-stat-num"
+                >
+                  {s.num}
+                </span>
                 <span className="hero-stat-label">{s.label}</span>
               </div>
             ))}
@@ -134,7 +192,6 @@ export default function Hero() {
               {CAROUSEL_SLIDES.map((slide, i) => (
                 <div key={i} className="carousel-slide">
                   <div
-                    ref={(el) => { slideImgsRef.current[i] = el }}
                     className="slide-img"
                     style={{ backgroundImage: `url(${slide.url})` }}
                   />
@@ -168,16 +225,18 @@ export default function Hero() {
           align-items: center;
           overflow: hidden;
           background: var(--color-bg);
+          perspective: 1200px;
         }
         .hero-bg {
           position: absolute;
-          inset: 0;
+          inset: -20%;
           background:
-            radial-gradient(ellipse 120% 60% at 30% 70%, rgba(26, 35, 126, 0.5) 0%, transparent 70%),
-            radial-gradient(ellipse 80% 50% at 70% 30%, rgba(255, 111, 0, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 120% 60% at 30% 70%, rgba(26, 35, 126, 0.6) 0%, transparent 70%),
+            radial-gradient(ellipse 80% 50% at 70% 30%, rgba(255, 111, 0, 0.15) 0%, transparent 60%),
             radial-gradient(ellipse 100% 80% at 50% 100%, rgba(10, 10, 26, 1) 0%, transparent 50%),
-            linear-gradient(180deg, var(--color-bg) 0%, rgba(26, 35, 126, 0.3) 40%, rgba(26, 35, 126, 0.5) 70%, var(--color-bg) 100%);
+            linear-gradient(180deg, var(--color-bg) 0%, rgba(26, 35, 126, 0.4) 40%, rgba(26, 35, 126, 0.6) 70%, var(--color-bg) 100%);
           pointer-events: none;
+          will-change: transform, opacity;
         }
         .hero-overlay {
           position: absolute;
@@ -186,7 +245,6 @@ export default function Hero() {
           opacity: 0;
           pointer-events: none;
           z-index: 1;
-          transition: background 0.3s ease;
         }
         .hero-layout {
           position: relative;
@@ -247,6 +305,7 @@ export default function Hero() {
         .hero-carousel {
           flex: 0 0 420px;
           position: relative;
+          transform-style: preserve-3d;
         }
         .carousel-viewport {
           width: 100%;
@@ -274,9 +333,7 @@ export default function Hero() {
           background-position: center;
           transition: transform 0.8s ease;
         }
-        .carousel-slide:hover .slide-img {
-          transform: scale(1.05);
-        }
+        .carousel-slide:hover .slide-img { transform: scale(1.05); }
         .slide-gradient {
           position: absolute;
           inset: 0;
