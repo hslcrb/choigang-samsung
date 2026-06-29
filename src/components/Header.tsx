@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV_LINKS = [
   { label: 'Home', href: '#home' },
@@ -10,6 +11,7 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { theme, toggle } = useTheme()
 
   return (
     <header className="header">
@@ -29,11 +31,20 @@ export default function Header() {
             ))}
           </ul>
         </nav>
-        <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-          <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
-        </button>
+        <div className="header-actions">
+          <button onClick={toggle} className="theme-toggle" aria-label="Toggle theme">
+            {theme === 'dark' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            )}
+          </button>
+          <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`} />
+          </button>
+        </div>
       </div>
 
       <style>{`
@@ -43,9 +54,10 @@ export default function Header() {
           left: 0;
           right: 0;
           z-index: 1000;
-          background: rgba(10, 10, 26, 0.95);
+          background: var(--header-bg);
           backdrop-filter: blur(12px);
           border-bottom: 1px solid var(--color-border);
+          transition: background 0.3s ease;
         }
         .header-inner {
           display: flex;
@@ -108,6 +120,27 @@ export default function Header() {
         .nav-link:hover::after {
           width: 100%;
         }
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .theme-toggle {
+          background: none;
+          border: 1px solid var(--color-border);
+          border-radius: 8px;
+          padding: 8px;
+          cursor: pointer;
+          color: var(--color-text-muted);
+          transition: all 0.3s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .theme-toggle:hover {
+          border-color: var(--color-accent);
+          color: var(--color-accent);
+        }
         .hamburger {
           display: none;
           flex-direction: column;
@@ -140,7 +173,7 @@ export default function Header() {
             top: 72px;
             left: 0;
             right: 0;
-            background: rgba(10, 10, 26, 0.98);
+            background: var(--header-bg);
             backdrop-filter: blur(12px);
             padding: 24px;
             transform: translateY(-120%);

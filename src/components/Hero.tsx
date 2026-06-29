@@ -4,27 +4,23 @@ import gsap from 'gsap'
 const CAROUSEL_SLIDES = [
   {
     label: 'Daegu Samsung Lions Park',
-    gradient: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%)',
-    pattern: 'radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 60%)',
-    accent: '🏟️',
+    credit: 'Caleb Woods',
+    url: 'https://images.unsplash.com/photo-1682384157113-47285026d285?w=800&q=80',
   },
   {
     label: 'KBO Championship Trophy',
-    gradient: 'linear-gradient(135deg, #ff6f00 0%, #ff8f00 50%, #ffab00 100%)',
-    pattern: 'radial-gradient(circle at 70% 60%, rgba(255,255,255,0.15) 0%, transparent 50%)',
-    accent: '🏆',
+    credit: 'Caleb Woods',
+    url: 'https://images.unsplash.com/photo-1682384157322-32ab3932da07?w=800&q=80',
   },
   {
     label: 'Lions Faithful Fans',
-    gradient: 'linear-gradient(135deg, #b71c1c 0%, #d32f2f 50%, #e53935 100%)',
-    pattern: 'radial-gradient(circle at 50% 30%, rgba(255,255,255,0.12) 0%, transparent 55%)',
-    accent: '🦁',
+    credit: 'Stuart Bloodworth',
+    url: 'https://images.unsplash.com/photo-1549403685-c4fa77cf85aa?w=800&q=80',
   },
   {
     label: 'Legends of Samsung',
-    gradient: 'linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%)',
-    pattern: 'radial-gradient(circle at 40% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-    accent: '⭐',
+    credit: 'Ty Downs',
+    url: 'https://images.unsplash.com/photo-1666366330282-b11566b272cf?w=800&q=80',
   },
 ]
 
@@ -39,6 +35,7 @@ export default function Hero() {
   const statsRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
   const slidesRef = useRef<HTMLDivElement>(null)
+  const slideImgsRef = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -135,13 +132,17 @@ export default function Hero() {
           <div className="carousel-viewport">
             <div ref={slidesRef} className="carousel-track">
               {CAROUSEL_SLIDES.map((slide, i) => (
-                <div key={i} className="carousel-slide" style={{ background: slide.gradient }}>
-                  <div className="slide-pattern" style={{ background: slide.pattern }} />
-                  <div className="slide-content">
-                    <span className="slide-icon">{slide.accent}</span>
+                <div key={i} className="carousel-slide">
+                  <div
+                    ref={(el) => { slideImgsRef.current[i] = el }}
+                    className="slide-img"
+                    style={{ backgroundImage: `url(${slide.url})` }}
+                  />
+                  <div className="slide-gradient" />
+                  <div className="slide-label-wrap">
                     <span className="slide-label">{slide.label}</span>
+                    <span className="slide-credit">Photo: {slide.credit} / Unsplash</span>
                   </div>
-                  <div className="slide-shine" />
                 </div>
               ))}
             </div>
@@ -166,7 +167,7 @@ export default function Hero() {
           display: flex;
           align-items: center;
           overflow: hidden;
-          background: #0a0a1a;
+          background: var(--color-bg);
         }
         .hero-bg {
           position: absolute;
@@ -175,16 +176,17 @@ export default function Hero() {
             radial-gradient(ellipse 120% 60% at 30% 70%, rgba(26, 35, 126, 0.5) 0%, transparent 70%),
             radial-gradient(ellipse 80% 50% at 70% 30%, rgba(255, 111, 0, 0.12) 0%, transparent 60%),
             radial-gradient(ellipse 100% 80% at 50% 100%, rgba(10, 10, 26, 1) 0%, transparent 50%),
-            linear-gradient(180deg, #0a0a1a 0%, #0d1137 40%, #1a237e 70%, #0a0a1a 100%);
+            linear-gradient(180deg, var(--color-bg) 0%, rgba(26, 35, 126, 0.3) 40%, rgba(26, 35, 126, 0.5) 70%, var(--color-bg) 100%);
           pointer-events: none;
         }
         .hero-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(90deg, rgba(10, 10, 26, 0.92) 0%, rgba(10, 10, 26, 0.6) 50%, rgba(10, 10, 26, 0.2) 100%);
+          background: linear-gradient(90deg, var(--color-overlay) 0%, var(--color-overlay-2) 50%, var(--color-overlay-3) 100%);
           opacity: 0;
           pointer-events: none;
           z-index: 1;
+          transition: background 0.3s ease;
         }
         .hero-layout {
           position: relative;
@@ -263,42 +265,46 @@ export default function Hero() {
           width: ${100 / CAROUSEL_SLIDES.length}%;
           height: 100%;
           position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           overflow: hidden;
         }
-        .slide-pattern { position: absolute; inset: 0; pointer-events: none; }
-        .slide-content {
-          position: relative;
-          z-index: 1;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
+        .slide-img {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          transition: transform 0.8s ease;
         }
-        .slide-icon { font-size: 4rem; }
+        .carousel-slide:hover .slide-img {
+          transform: scale(1.05);
+        }
+        .slide-gradient {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.6) 100%);
+          pointer-events: none;
+        }
+        .slide-label-wrap {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          padding: 24px;
+          z-index: 1;
+        }
         .slide-label {
           font-size: 1rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 2px;
-          color: rgba(255,255,255,0.9);
-          text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          color: #fff;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+          display: block;
         }
-        .slide-shine {
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.08) 45%, transparent 50%);
-          animation: shine 6s ease-in-out infinite;
-        }
-        @keyframes shine {
-          0%, 100% { transform: translateX(-100%) rotate(45deg); }
-          50% { transform: translateX(100%) rotate(45deg); }
+        .slide-credit {
+          font-size: 0.65rem;
+          color: rgba(255,255,255,0.5);
+          margin-top: 4px;
+          display: block;
         }
         .carousel-indicators {
           display: flex;
@@ -344,7 +350,7 @@ export default function Hero() {
         @media (max-width: 768px) {
           .hero-title { font-size: 2.2rem; }
           .hero-overlay {
-            background: linear-gradient(180deg, rgba(10, 10, 26, 0.95) 0%, rgba(10, 10, 26, 0.8) 100%);
+            background: linear-gradient(180deg, var(--color-overlay) 0%, rgba(10, 10, 26, 0.8) 100%);
           }
         }
       `}</style>
