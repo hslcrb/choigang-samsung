@@ -1,3 +1,9 @@
+import { useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
 const NEWS_ITEMS = [
   {
     date: 'Jun 28, 2026',
@@ -26,11 +32,39 @@ const NEWS_ITEMS = [
 ]
 
 export default function News() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(titleRef.current, {
+        opacity: 0,
+        y: 40,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', toggleActions: 'play none none reverse' },
+      })
+      const cards = gridRef.current?.children
+      if (cards) {
+        gsap.from(cards, {
+          opacity: 0,
+          y: 50,
+          duration: 0.7,
+          stagger: 0.15,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: gridRef.current, start: 'top 80%', toggleActions: 'play none none reverse' },
+        })
+      }
+    })
+    return () => ctx.revert()
+  }, [])
+
   return (
-    <section id="news" className="section">
+    <section id="news" ref={sectionRef} className="section">
       <div className="container">
-        <h2 className="section-title">Latest News</h2>
-        <div className="news-grid">
+        <h2 ref={titleRef} className="section-title">Latest News</h2>
+        <div ref={gridRef} className="news-grid">
           {NEWS_ITEMS.map((item) => (
             <article key={item.title} className="news-card">
               <div className="news-card-header">
@@ -110,13 +144,9 @@ export default function News() {
           letter-spacing: 1px;
           transition: gap 0.3s;
         }
-        .news-read-more:hover {
-          gap: 10px;
-        }
+        .news-read-more:hover { gap: 10px; }
         @media (max-width: 768px) {
-          .news-grid {
-            grid-template-columns: 1fr;
-          }
+          .news-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </section>

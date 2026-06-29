@@ -1,3 +1,9 @@
+import { useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
 const BANNERS = [
   {
     icon: '🎫',
@@ -23,11 +29,28 @@ const BANNERS = [
 ]
 
 export default function PromotionBanner() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(gridRef.current?.children || [], {
+        opacity: 0,
+        y: 60,
+        duration: 0.8,
+        stagger: 0.18,
+        ease: 'power3.out',
+        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', toggleActions: 'play none none reverse' },
+      })
+    })
+    return () => ctx.revert()
+  }, [])
+
   return (
-    <section className="section" style={{ background: 'var(--color-bg-section)' }}>
+    <section ref={sectionRef} className="section" style={{ background: 'var(--color-bg-section)' }}>
       <div className="container">
         <h2 className="section-title">Promotions & Offers</h2>
-        <div className="promo-grid">
+        <div ref={gridRef} className="promo-grid">
           {BANNERS.map((b) => (
             <div key={b.title} className="promo-card" style={{ background: b.gradient }}>
               <div className="promo-icon">{b.icon}</div>
@@ -40,54 +63,22 @@ export default function PromotionBanner() {
       </div>
 
       <style>{`
-        .promo-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
-        }
+        .promo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .promo-card {
-          border-radius: 16px;
-          padding: 36px 28px;
-          display: flex;
-          flex-direction: column;
+          border-radius: 16px; padding: 36px 28px;
+          display: flex; flex-direction: column;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .promo-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
-        }
-        .promo-icon {
-          font-size: 2.5rem;
-          margin-bottom: 16px;
-        }
-        .promo-title {
-          font-size: 1.15rem;
-          font-weight: 700;
-          margin-bottom: 12px;
-        }
-        .promo-desc {
-          font-size: 0.9rem;
-          color: rgba(255, 255, 255, 0.8);
-          line-height: 1.6;
-          margin-bottom: 24px;
-          flex: 1;
-        }
+        .promo-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3); }
+        .promo-icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .promo-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
+        .promo-desc { font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6; margin-bottom: 24px; flex: 1; }
         .promo-btn {
-          background: rgba(255, 255, 255, 0.15);
-          color: #fff;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          align-self: flex-start;
+          background: rgba(255, 255, 255, 0.15); color: #fff;
+          border: 1px solid rgba(255, 255, 255, 0.3); align-self: flex-start;
         }
-        .promo-btn:hover {
-          background: rgba(255, 255, 255, 0.25);
-          transform: translateY(-2px);
-          box-shadow: none;
-        }
-        @media (max-width: 768px) {
-          .promo-grid {
-            grid-template-columns: 1fr;
-          }
-        }
+        .promo-btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-2px); box-shadow: none; }
+        @media (max-width: 768px) { .promo-grid { grid-template-columns: 1fr; } }
       `}</style>
     </section>
   )
